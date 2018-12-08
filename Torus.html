@@ -8,10 +8,18 @@
     <script type="text/javascript" src="three.min.js"></script>
     <script type="text/javascript" src="stats.js"></script>
     <script type="text/javascript" src="dat.gui.js"></script>
+    <style>
+        body {
+            /* set margin to 0 and overflow to hidden, to go fullscreen */
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
 
 </head>
 <body>
-<div id="TutContainer"></div>
+<div id="panelSkor"></div>
+<div id="Container"></div>
 </div>
 
 <!-- Javascript code that runs our Three.js examples -->
@@ -81,11 +89,11 @@ function createScene(){
     scene.fog = new THREE.FogExp2( 0xf0fff0, 0.14 );
     camera = new THREE.PerspectiveCamera( 60, sceneWidth / sceneHeight, 0.1, 1000 );//perspective camera
     renderer = new THREE.WebGLRenderer({alpha:true});//renderer with transparent backdrop
-    renderer.setClearColor(0xfffafa, 1); 
+    renderer.setClearColor(0xfafaff, 1); 
     renderer.shadowMap.enabled = true;//enable shadow
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setSize( sceneWidth-19, sceneHeight-20 );
-    dom = document.getElementById('TutContainer');
+    renderer.setSize( sceneWidth, sceneHeight );
+    dom = document.getElementById('Container');
     dom.appendChild(renderer.domElement);
     //stats = new Stats();
     //dom.appendChild(stats.dom);
@@ -110,18 +118,20 @@ function createScene(){
     window.addEventListener('resize', onWindowResize, false);//resize callback
 
     document.onkeydown = handleKeyDown;
-    
+  
     scoreText = document.createElement('div');
+    scoreText.id = "skor";
     scoreText.style.position = 'absolute';
-    //text2.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
+    scoreText.style.fontSize = '50px';
+    scoreText.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
     scoreText.style.width = 100;
     scoreText.style.height = 100;
     //scoreText.style.backgroundColor = "blue";
     scoreText.innerHTML = "0";
     scoreText.style.top = 50 + 'px';
-    scoreText.style.left = 10 + 'px';
+    scoreText.style.left = sceneWidth/2 + 'px';
     document.body.appendChild(scoreText);
-  
+
   var infoText = document.createElement('div');
     infoText.style.position = 'absolute';
     infoText.style.width = 100;
@@ -130,7 +140,7 @@ function createScene(){
     infoText.innerHTML = "UP - Jump, Left/Right - Move";
     infoText.style.top = 10 + 'px';
     infoText.style.left = 10 + 'px';
-    document.body.appendChild(infoText);
+    //document.body.appendChild(infoText);
 }
 function addExplosion(){
     particleGeometry = new THREE.Geometry();
@@ -155,25 +165,20 @@ function createTreesPool(){
     }
 }
 function handleKeyDown(keyEvent){
-    if(jumping)return;
+    if(hasCollided) return;
+    if(jumping) return;
     var validMove=true;
     if ( keyEvent.keyCode === 37) {//left
-        if(currentLane==middleLane){
-            currentLane=leftLane;
-        }else if(currentLane==rightLane){
-            currentLane=middleLane;
-        }else{
-            validMove=false;    
-        }
+        if(currentLane==middleLane) currentLane=leftLane;
+        else if(currentLane==rightLane) currentLane=middleLane;
+        else validMove=false;
+
     } else if ( keyEvent.keyCode === 39) {//right
-        if(currentLane==middleLane){
-            currentLane=rightLane;
-        }else if(currentLane==leftLane){
-            currentLane=middleLane;
-        }else{
-            validMove=false;    
-        }
-    }else{
+        if(currentLane==middleLane) currentLane=rightLane;
+        else if(currentLane==leftLane) currentLane=middleLane;
+        else validMove=false; 
+
+    } else {
         if ( keyEvent.keyCode === 38){//up, jump
             bounceValue=0.1;
             jumping=true;
@@ -182,13 +187,15 @@ function handleKeyDown(keyEvent){
     }
     //heroSphere.position.x=currentLane;
     if(validMove){
-        jumping=true;
         bounceValue=0.1;
+        jumping=true;
     }
 }
 function addHero(){
-    var sphereGeometry = new THREE.SphereGeometry( heroRadius, 40,);
-    var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0x6fa8dc ,shading:THREE.FlatShading} )
+    var sphereGeometry = new THREE.SphereGeometry( heroRadius, 10, 10 );
+    var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0xFFFFFF , emissive: 0x555555 , shading:THREE.FlatShading} )
+    //var sphereMaterial = new THREE.MeshBasicMaterial();
+    //sphereMaterial.wireframe = true;
     jumping=false;
     heroSphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
     heroSphere.receiveShadow = true;
@@ -202,9 +209,9 @@ function addHero(){
 function addWorld(){
     var sides=60;
     var tiers=40;
-    var sphereGeometry = new THREE.SphereGeometry( worldRadius, sides,tiers);
-    var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0x008484 ,shading:THREE.FlatShading} )
-    
+    var sphereGeometry = new THREE.SphereGeometry( worldRadius, sides, tiers );
+    var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0x03a9f4 ,shading:THREE.FlatShading } )
+    //
     var vertexIndex;
     var vertexVector= new THREE.Vector3();
     var nextVertexVector= new THREE.Vector3();
@@ -258,18 +265,20 @@ function addLight(){
     sun.shadow.camera.far = 50 ;
 }
 function addPathTree(){
-    var options=[0,1,2];
-    var lane= Math.floor(Math.random()*3);
-    addTree(true,lane);
-    options.splice(lane,1);
-    if(Math.random()>0.5){
-        lane= Math.floor(Math.random()*2);
-        addTree(true,options[lane]);
+    if(!hasCollided) {
+        var options=[0,1,2];
+        var lane= Math.floor(Math.random()*3);
+        addTree(true,lane);
+        options.splice(lane,1);
+        if(Math.random()>0.5){
+            lane= Math.floor(Math.random()*2);
+            addTree(true,options[lane]);
+        }
     }
 }
 function addWorldTrees(){
-    var numTrees=360;
-    var gap=6/36;
+    var numTrees=90;
+    var gap=6.28/90;
     for(var i=0;i<numTrees;i++){
         addTree(false,i*gap, true);
         addTree(false,i*gap, false);
@@ -283,7 +292,7 @@ function addTree(inPath, row, isLeft){
         newTree.visible=true;
         //console.log("add tree");
         treesInPath.push(newTree);
-        sphericalHelper.set( worldRadius-0.3, pathAngleValues[row], -rollingGroundSphere.rotation.x+10 );
+        sphericalHelper.set( worldRadius-0.3, pathAngleValues[row], -rollingGroundSphere.rotation.x+4 );
     }else{
         newTree=createTree();
         var forestAreaAngle=0;//[1.52,1.57,1.62];
@@ -302,14 +311,13 @@ function addTree(inPath, row, isLeft){
     
     rollingGroundSphere.add(newTree);
 }
-
 function createTree(){
     var sides=8;
     var tiers=6;
     var scalarMultiplier=(Math.random()*(0.25-0.1))+0.05;
     var midPointVector= new THREE.Vector3();
     var vertexVector= new THREE.Vector3();
-    var treeGeometry = new THREE.ConeGeometry( 0.5, 1, sides, tiers);
+    var treeGeometry = new THREE.SphereGeometry( 0.2, 10, 10 ); //ConeGeometry( 0.5, 1, sides, tiers);
     var treeMaterial = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
     var offset;
     midPointVector=treeGeometry.vertices[0].clone();
@@ -391,7 +399,7 @@ function update(){
         bounceValue=(Math.random()*0.04)+0.005;
     }
     heroSphere.position.y+=bounceValue;
-    heroSphere.position.x=THREE.Math.lerp(heroSphere.position.x,currentLane, 2*clock.getDelta());//clock.getElapsedTime());
+    heroSphere.position.x=THREE.Math.lerp(heroSphere.position.x,currentLane, 3*clock.getDelta());//clock.getElapsedTime());
     bounceValue-=gravity;
     if(clock.getElapsedTime()>treeReleaseInterval){
         clock.start();
@@ -413,13 +421,14 @@ function doTreeLogic(){
     treesInPath.forEach( function ( element, index ) {
         oneTree=treesInPath[ index ];
         treePos.setFromMatrixPosition( oneTree.matrixWorld );
-        if(treePos.z>6 &&oneTree.visible){//gone out of our view zone
+        if(treePos.z>6 && oneTree.visible){//gone out of our view zone
             treesToRemove.push(oneTree);
         }else{//check collision
             if(treePos.distanceTo(heroSphere.position)<=0.6){
                 console.log("hit");
                 hasCollided=true;
                 explode();
+                if(hasCollided) gameOver();
             }
         }
     });
@@ -463,8 +472,29 @@ function render(){
     renderer.render(scene, camera);//draw
 }
 function gameOver () {
-  //cancelAnimationFrame( globalRenderID );
-  //window.clearInterval( powerupSpawnIntervalID );
+    //cancelAnimationFrame( globalRenderID );
+    //window.clearInterval( powerupSpawnIntervalID );
+    tes = document.getElementById('panelSkor');
+    tes.style.position = 'absolute';
+    tes.style.left = 0 + "px";
+    tes.style.top = 0 + "px";
+    tes.style.width = sceneWidth + "px";
+    tes.style.height = sceneHeight + "px";
+    tes.style.background = "rgba(255,255,255,0.8)";
+    tes.style.zIndex = 2;
+    tes.innerHTML = "Game Over";
+    tes.style.fontSize = "100px";
+    tes.style.textAlign = "center";
+    tes.style.paddingTop = sceneHeight/2-100 + "px";
+    //document.body.appendChild(tes);
+
+    skor = document.getElementById('skor');
+    skor.style.zIndex = 3;
+    skor.innerHTML = "Skor : " + score;
+    skor.style.textAlign = "center";
+    skor.style.top = sceneHeight/2+50 + "px";
+    skor.style.left = "0px";
+    skor.style.width = sceneWidth + "px";
 }
 function onWindowResize() {
     //resize & align
