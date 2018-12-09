@@ -28,6 +28,10 @@
 <audio id="deadbgm">
     <source src="asset/ded.mp3" type="audio/mpeg">
 </audio>
+<audio id="jumpbgm">
+    <source src="asset/jump.mp3" type="audio/mpeg">
+</audio>
+
 
 <!-- Javascript code that runs our Three.js examples -->
 <script type="text/javascript">
@@ -142,6 +146,7 @@ var jbgm = document.getElementById("jalanbgm");
 jbgm.loop=true;
 var dbgm = document.getElementById("deadbgm");
 dbgm.loop=true;
+var jubgm = document.getElementById("jumpbgm");
 init();
 function init() {
     // set up the scene
@@ -306,14 +311,17 @@ function handleKeyDown(keyEvent){
         if(currentLane==middleLane) currentLane=leftLane;
         else if(currentLane==rightLane) currentLane=middleLane;
         else validMove=false;
+        jubgm.play();
     } else if ( keyEvent.keyCode === 39) {//right
         if(currentLane==middleLane) currentLane=rightLane;
         else if(currentLane==leftLane) currentLane=middleLane;
-        else validMove=false; 
+        else validMove=false;
+        jubgm.play(); 
     } else {
         if ( keyEvent.keyCode === 38){//up, jump
             bounceValue=0.1;
             jumping=true;
+            jubgm.play();
         }
         validMove=false;
     }
