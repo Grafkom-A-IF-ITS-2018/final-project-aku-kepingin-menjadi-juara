@@ -500,82 +500,67 @@ function addTree1(inPath, row, isLeft){
     rollingGroundSphere.add(newTree);
 }
 function createTree(){
-      var sides=8;
+    var sides=8;
     var tiers=6;
-    var scalarMultiplier=(Math.random()*(0.25-0.1))+0.05;
-    var midPointVector= new THREE.Vector3();
-    var vertexVector= new THREE.Vector3();
-    var treeGeometry = new THREE.SphereGeometry( 0.2, 10, 10 ); 
-    var treeMaterial = new THREE.MeshStandardMaterial( { color: 0xFFFFFF,shading:THREE.FlatShading  } );
-    var offset;
-    midPointVector=treeGeometry.vertices[0].clone();
-    var currentTier=0;
-    var vertexIndex;
-    var treeTop = new THREE.Mesh( treeGeometry, treeMaterial );
-    treeTop.castShadow=true;
-    treeTop.receiveShadow=false;
-    treeTop.position.y=0.9;
-    treeTop.rotation.y=(Math.random()*(Math.PI));
+    
+    var snowMaterial = new THREE.MeshStandardMaterial( { color: 0xFFFFFF, emissive: 0x555555, shading:THREE.SmoothShading  } );
+    var blackMat = new THREE.MeshStandardMaterial( { color: 0x111111, shading:THREE.SmoothShading  } );
+    var rendaMat = new THREE.MeshStandardMaterial( { color: 0xDD1111, shading:THREE.SmoothShading  } );
+    var noseMat = new THREE.MeshStandardMaterial( { color: 0xFF9800, shading:THREE.SmoothShading  } );
 
-    var tree2Geometry = new THREE.SphereGeometry( 0.25, 10, 10 ); //ConeGeometry( 0.5, 1, sides, tiers);
-    var tree2Material = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
-    var tree2Top = new THREE.Mesh( tree2Geometry, tree2Material );
-    tree2Top.castShadow=true;
-    tree2Top.receiveShadow=false;
-    tree2Top.position.y=0.7;
+    var headGeometry = new THREE.SphereGeometry( 0.2, 10, 10 ); 
+    var head = new THREE.Mesh( headGeometry, snowMaterial );
+    head.position.y=0.85;
 
-    var tree =new THREE.Object3D();
+    var mataGeom = new THREE.SphereGeometry( 0.05, 5, 5 );
+    var mataKi = new THREE.Mesh( mataGeom, blackMat );
+    mataKi.position.y = 0.88;
+    mataKi.position.x = -0.11;
+    mataKi.position.z = 0.13;
+    var mataKa = new THREE.Mesh( mataGeom, blackMat );
+    mataKa.position.y = 0.88;
+    mataKa.position.x = 0.11;
+    mataKa.position.z = 0.13;
 
-    tree.add(treeTop);
-    tree.add(tree2Top);
-    return tree;
+    var noseGeom = new THREE.CylinderGeometry(0.01, 0.06, 0.3);
+    var nose = new THREE.Mesh( noseGeom, noseMat );
+    nose.position.y = 0.82;
+    nose.position.z = 0.3;
+
+    nose.rotation.x = 1.7;
+    
+
+    var topiGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.27);
+    var topi = new THREE.Mesh(topiGeom, blackMat);
+    topi.position.y = 1.15;
+
+    var topi2Geom = new THREE.CylinderGeometry(0.34, 0.34, 0.04);
+    var topi2 = new THREE.Mesh(topi2Geom, blackMat);
+    topi2.position.y = 1;
+
+    var rendaGeom = new THREE.CylinderGeometry(0.17, 0.17, 0.1);
+    var renda = new THREE.Mesh(rendaGeom, rendaMat);
+    renda.position.y = 1.05;
+    
+
+    var bodyGeometry = new THREE.SphereGeometry( 0.25, 10, 10 );
+    var body = new THREE.Mesh( bodyGeometry, snowMaterial );
+    body.position.y=0.7;
+
+    var bokongGeometry = new THREE.SphereGeometry( 0.35, 10, 10 ); 
+    var bokong = new THREE.Mesh( bokongGeometry, snowMaterial );
+    bokong.position.y=0.45;
+
+
+    var snowman = new THREE.Object3D();
+    snowman.add(head); snowman.add(nose); snowman.add(mataKi); snowman.add(mataKa);
+    snowman.add(topi);snowman.add(topi2);snowman.add(renda);
+    // snowman.add(body);
+    snowman.add(bokong);
+
+    return snowman;
 }
 
-function blowUpTree(vertices,sides,currentTier,scalarMultiplier,odd){
-    var vertexIndex;
-    var vertexVector= new THREE.Vector3();
-    var midPointVector=vertices[0].clone();
-    var offset;
-    for(var i=0;i<sides;i++){
-        vertexIndex=(currentTier*sides)+1;
-        vertexVector=vertices[i+vertexIndex].clone();
-        midPointVector.y=vertexVector.y;
-        offset=vertexVector.sub(midPointVector);
-        if(odd){
-            if(i%2===0){
-                offset.normalize().multiplyScalar(scalarMultiplier/6);
-                vertices[i+vertexIndex].add(offset);
-            }else{
-                offset.normalize().multiplyScalar(scalarMultiplier);
-                vertices[i+vertexIndex].add(offset);
-                vertices[i+vertexIndex].y=vertices[i+vertexIndex+sides].y+0.05;
-            }
-        }else{
-            if(i%2!==0){
-                offset.normalize().multiplyScalar(scalarMultiplier/6);
-                vertices[i+vertexIndex].add(offset);
-            }else{
-                offset.normalize().multiplyScalar(scalarMultiplier);
-                vertices[i+vertexIndex].add(offset);
-                vertices[i+vertexIndex].y=vertices[i+vertexIndex+sides].y+0.05;
-            }
-        }
-    }
-}
-function tightenTree(vertices,sides,currentTier){
-    var vertexIndex;
-    var vertexVector= new THREE.Vector3();
-    var midPointVector=vertices[0].clone();
-    var offset;
-    for(var i=0;i<sides;i++){
-        vertexIndex=(currentTier*sides)+1;
-        vertexVector=vertices[i+vertexIndex].clone();
-        midPointVector.y=vertexVector.y;
-        offset=vertexVector.sub(midPointVector);
-        offset.normalize().multiplyScalar(0.06);
-        vertices[i+vertexIndex].sub(offset);
-    }
-}
 function createTree1(){
     var sides=8;
     var tiers=6;
