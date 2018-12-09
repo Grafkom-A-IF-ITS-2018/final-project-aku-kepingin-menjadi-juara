@@ -54,6 +54,10 @@ var treeReleaseInterval=0.5;
 var lastTreeReleaseTime=0;
 var treesInPath;
 var treesPool;
+var treeReleaseInterval1=0.5;
+var lastTreeReleaseTime1=0;
+var treesInPath1;
+var treesPool1;
 var particleGeometry;
 var particleCount=20;
 var explosionPower =1.06;
@@ -62,22 +66,19 @@ var particles;
 var scoreText;
 var score;
 var hasCollided;
-
 init();
-
 function init() {
     // set up the scene
     createScene();
-
     //call game loop
     update();
 }
-
 function createScene(){
     hasCollided=false;
     score=0;
     treesInPath=[];
     treesPool=[];
+    treesPool1=[];
     clock=new THREE.Clock();
     clock.start();
     heroRollingSpeed=(rollingSpeed*worldRadius/heroRadius)/5;
@@ -98,6 +99,7 @@ function createScene(){
     //stats = new Stats();
     //dom.appendChild(stats.dom);
     createTreesPool();
+    createTreesPool1();
     addWorld();
     addHero();
     addLight();
@@ -116,7 +118,6 @@ function createScene(){
     orbitControl.maxAzimuthAngle = 0.2;
     */
     window.addEventListener('resize', onWindowResize, false);//resize callback
-
     document.onkeydown = handleKeyDown;
   
     scoreText = document.createElement('div');
@@ -131,7 +132,6 @@ function createScene(){
     scoreText.style.top = 50 + 'px';
     scoreText.style.left = sceneWidth/2 + 'px';
     document.body.appendChild(scoreText);
-
   var infoText = document.createElement('div');
     infoText.style.position = 'absolute';
     infoText.style.width = 100;
@@ -164,6 +164,14 @@ function createTreesPool(){
         treesPool.push(newTree);
     }
 }
+function createTreesPool1(){
+    var maxTreesInPool=10;
+    var newTree;
+    for(var i=0; i<maxTreesInPool;i++){
+        newTree=createTree();
+        treesPool1.push(newTree);
+    }
+}
 function handleKeyDown(keyEvent){
     if(hasCollided) return;
     if(jumping) return;
@@ -172,12 +180,10 @@ function handleKeyDown(keyEvent){
         if(currentLane==middleLane) currentLane=leftLane;
         else if(currentLane==rightLane) currentLane=middleLane;
         else validMove=false;
-
     } else if ( keyEvent.keyCode === 39) {//right
         if(currentLane==middleLane) currentLane=rightLane;
         else if(currentLane==leftLane) currentLane=middleLane;
         else validMove=false; 
-
     } else {
         if ( keyEvent.keyCode === 38){//up, jump
             bounceValue=0.1;
@@ -250,6 +256,7 @@ function addWorld(){
     rollingGroundSphere.position.y=-24;
     rollingGroundSphere.position.z=2;
     addWorldTrees();
+    addWorldTrees1();
 }
 function addLight(){
     var hemisphereLight = new THREE.HemisphereLight(0xfffafa,0x000000, .9)
@@ -276,12 +283,32 @@ function addPathTree(){
         }
     }
 }
+function addPathTree1(){
+    // if(!hasCollided) {
+    //     var options=[0,1,2];
+    //     var lane= Math.floor(Math.random()*3);
+    //     addTree(true,lane);
+    //     options.splice(lane,1);
+    //     if(Math.random()>0.5){
+    //         lane= Math.floor(Math.random()*2);
+    //         addTree(true,options[lane]);
+    //     }
+    // }
+}
 function addWorldTrees(){
-    var numTrees=90;
+    var numTrees=0;
     var gap=6.28/90;
     for(var i=0;i<numTrees;i++){
         addTree(false,i*gap, true);
         addTree(false,i*gap, false);
+    }
+}
+function addWorldTrees1(){
+    var numTrees=90;
+    var gap=6.28/90;
+    for(var i=0;i<numTrees;i++){
+        addTree1(false,i*gap, true);
+        addTree1(false,i*gap, false);
     }
 }
 function addTree(inPath, row, isLeft){
@@ -311,38 +338,65 @@ function addTree(inPath, row, isLeft){
     
     rollingGroundSphere.add(newTree);
 }
+function addTree1(inPath, row, isLeft){
+    var newTree;
+    if(inPath){
+        if(treesPool1.length==0)return;
+        newTree=treesPool1.pop();
+        newTree.visible=true;
+        //console.log("add tree");
+        treesInPath1.push(newTree);
+        sphericalHelper.set( worldRadius-0.3, pathAngleValues[row], -rollingGroundSphere.rotation.x+4 );
+    }else{
+        newTree=createTree1();
+        var forestAreaAngle=0;//[1.52,1.57,1.62];
+        if(isLeft){
+            forestAreaAngle=1.68+Math.random()*0.1;
+        }else{
+            forestAreaAngle=1.46-Math.random()*0.1;
+        }
+        sphericalHelper.set( worldRadius-0.3, forestAreaAngle, row );
+    }
+    newTree.position.setFromSpherical( sphericalHelper );
+    var rollingGroundVector=rollingGroundSphere.position.clone().normalize();
+    var treeVector=newTree.position.clone().normalize();
+    newTree.quaternion.setFromUnitVectors(treeVector,rollingGroundVector);
+    newTree.rotation.x+=(Math.random()*(2*Math.PI/10))+-Math.PI/10;
+    
+    rollingGroundSphere.add(newTree);
+}
 function createTree(){
-    var sides=8;
+      var sides=8;
     var tiers=6;
     var scalarMultiplier=(Math.random()*(0.25-0.1))+0.05;
     var midPointVector= new THREE.Vector3();
     var vertexVector= new THREE.Vector3();
-    var treeGeometry = new THREE.SphereGeometry( 0.2, 10, 10 ); //ConeGeometry( 0.5, 1, sides, tiers);
-    var treeMaterial = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
+    var treeGeometry = new THREE.SphereGeometry( 0.2, 10, 10 ); 
+    var treeMaterial = new THREE.MeshStandardMaterial( { color: 0xFFFFFF,shading:THREE.FlatShading  } );
     var offset;
     midPointVector=treeGeometry.vertices[0].clone();
     var currentTier=0;
     var vertexIndex;
-    blowUpTree(treeGeometry.vertices,sides,0,scalarMultiplier);
-    tightenTree(treeGeometry.vertices,sides,1);
-    blowUpTree(treeGeometry.vertices,sides,2,scalarMultiplier*1.1,true);
-    tightenTree(treeGeometry.vertices,sides,3);
-    blowUpTree(treeGeometry.vertices,sides,4,scalarMultiplier*1.2);
-    tightenTree(treeGeometry.vertices,sides,5);
     var treeTop = new THREE.Mesh( treeGeometry, treeMaterial );
     treeTop.castShadow=true;
     treeTop.receiveShadow=false;
     treeTop.position.y=0.9;
     treeTop.rotation.y=(Math.random()*(Math.PI));
-    var treeTrunkGeometry = new THREE.CylinderGeometry( 0.1, 0.1,0.5);
-    var trunkMaterial = new THREE.MeshStandardMaterial( { color: 0x886633,shading:THREE.FlatShading  } );
-    var treeTrunk = new THREE.Mesh( treeTrunkGeometry, trunkMaterial );
-    treeTrunk.position.y=0.25;
+
+    var tree2Geometry = new THREE.SphereGeometry( 0.25, 10, 10 ); //ConeGeometry( 0.5, 1, sides, tiers);
+    var tree2Material = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
+    var tree2Top = new THREE.Mesh( tree2Geometry, tree2Material );
+    tree2Top.castShadow=true;
+    tree2Top.receiveShadow=false;
+    tree2Top.position.y=0.7;
+
     var tree =new THREE.Object3D();
-    tree.add(treeTrunk);
+
     tree.add(treeTop);
+    tree.add(tree2Top);
     return tree;
 }
+
 function blowUpTree(vertices,sides,currentTier,scalarMultiplier,odd){
     var vertexIndex;
     var vertexVector= new THREE.Vector3();
@@ -388,7 +442,84 @@ function tightenTree(vertices,sides,currentTier){
         vertices[i+vertexIndex].sub(offset);
     }
 }
+function createTree1(){
+    var sides=8;
+    var tiers=6;
+    var scalarMultiplier=(Math.random()*(0.25-0.1))+0.05;
+    var midPointVector= new THREE.Vector3();
+    var vertexVector= new THREE.Vector3();
+    var treeGeometry = new THREE.ConeGeometry( 0.5, 1, sides, tiers);
+    var treeMaterial = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
+    var offset;
+    midPointVector=treeGeometry.vertices[0].clone();
+    var currentTier=0;
+    var vertexIndex;
+    blowUpTree1(treeGeometry.vertices,sides,0,scalarMultiplier);
+    tightenTree1(treeGeometry.vertices,sides,1);
+    blowUpTree1(treeGeometry.vertices,sides,2,scalarMultiplier*1.1,true);
+    tightenTree1(treeGeometry.vertices,sides,3);
+    blowUpTree1(treeGeometry.vertices,sides,4,scalarMultiplier*1.2);
+    tightenTree1(treeGeometry.vertices,sides,5);
+    var treeTop = new THREE.Mesh( treeGeometry, treeMaterial );
+    treeTop.castShadow=true;
+    treeTop.receiveShadow=false;
+    treeTop.position.y=0.9;
+    treeTop.rotation.y=(Math.random()*(Math.PI));
 
+    var treeTrunkGeometry = new THREE.CylinderGeometry( 0.1, 0.1,0.5);
+    var trunkMaterial = new THREE.MeshStandardMaterial( { color: 0x886633,shading:THREE.FlatShading  } );
+    var treeTrunk = new THREE.Mesh( treeTrunkGeometry, trunkMaterial );
+    treeTrunk.position.y=0.25;
+    var tree =new THREE.Object3D();
+    tree.add(treeTrunk);
+    tree.add(treeTop);
+    return tree;
+}
+function blowUpTree1(vertices,sides,currentTier,scalarMultiplier,odd){
+    var vertexIndex;
+    var vertexVector= new THREE.Vector3();
+    var midPointVector=vertices[0].clone();
+    var offset;
+    for(var i=0;i<sides;i++){
+        vertexIndex=(currentTier*sides)+1;
+        vertexVector=vertices[i+vertexIndex].clone();
+        midPointVector.y=vertexVector.y;
+        offset=vertexVector.sub(midPointVector);
+        if(odd){
+            if(i%2===0){
+                offset.normalize().multiplyScalar(scalarMultiplier/6);
+                vertices[i+vertexIndex].add(offset);
+            }else{
+                offset.normalize().multiplyScalar(scalarMultiplier);
+                vertices[i+vertexIndex].add(offset);
+                vertices[i+vertexIndex].y=vertices[i+vertexIndex+sides].y+0.05;
+            }
+        }else{
+            if(i%2!==0){
+                offset.normalize().multiplyScalar(scalarMultiplier/6);
+                vertices[i+vertexIndex].add(offset);
+            }else{
+                offset.normalize().multiplyScalar(scalarMultiplier);
+                vertices[i+vertexIndex].add(offset);
+                vertices[i+vertexIndex].y=vertices[i+vertexIndex+sides].y+0.05;
+            }
+        }
+    }
+}
+function tightenTree1(vertices,sides,currentTier){
+    var vertexIndex;
+    var vertexVector= new THREE.Vector3();
+    var midPointVector=vertices[0].clone();
+    var offset;
+    for(var i=0;i<sides;i++){
+        vertexIndex=(currentTier*sides)+1;
+        vertexVector=vertices[i+vertexIndex].clone();
+        midPointVector.y=vertexVector.y;
+        offset=vertexVector.sub(midPointVector);
+        offset.normalize().multiplyScalar(0.06);
+        vertices[i+vertexIndex].sub(offset);
+    }
+}
 function update(){
     //stats.update();
     //animate
@@ -487,7 +618,6 @@ function gameOver () {
     tes.style.textAlign = "center";
     tes.style.paddingTop = sceneHeight/2-100 + "px";
     //document.body.appendChild(tes);
-
     skor = document.getElementById('skor');
     skor.style.zIndex = 3;
     skor.innerHTML = "Skor : " + score;
