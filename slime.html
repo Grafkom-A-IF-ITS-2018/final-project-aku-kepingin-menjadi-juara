@@ -212,8 +212,8 @@ function createScene(){
     addLight();
     addExplosion();
     
-    camera.position.z = 6.5;
-    camera.position.y = 2.5;
+    camera.position.z = 6.75;
+    camera.position.y = 2.75;
     /*orbitControl = new THREE.OrbitControls( camera, renderer.domElement );//helper to rotate around in scene
     orbitControl.addEventListener( 'change', render );
     orbitControl.noKeys = true;
@@ -686,7 +686,7 @@ function doTreeLogic(){
     treesInPath.forEach( function ( element, index ) {
         oneTree=treesInPath[ index ];
         treePos.setFromMatrixPosition( oneTree.matrixWorld );
-        if(treePos.z>6 && oneTree.visible){//gone out of our view zone
+        if(treePos.z>5 && oneTree.visible){//gone out of our view zone
             treesToRemove.push(oneTree);
         }else{//check collision
             if(treePos.distanceTo(heroSphere.position)<=0.6){
