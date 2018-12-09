@@ -224,7 +224,7 @@ function createScene(){
   
     scoreText = document.createElement('div');
     scoreText.id = "skor";
-    scoreText.style.fontcolor= 0xFFFFFF;
+    scoreText.style.color= "white";
     scoreText.style.position = 'absolute';
     scoreText.style.fontSize = '50px';
     scoreText.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
@@ -749,6 +749,7 @@ function gameOver () {
     skor = document.getElementById('skor');
     skor.style.zIndex = 3;
     skor.innerHTML = "Skor : " + score;
+    skor.style.color="black";
     skor.style.textAlign = "center";
     skor.style.top = sceneHeight/2+50 + "px";
     skor.style.left = "0px";
